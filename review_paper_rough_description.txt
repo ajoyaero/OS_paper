@@ -1,0 +1,1284 @@
+www.bohrium.com
+scimaster.bohrium.com
+AI Generated
+Supported by SciMaster
+Quantifying Fairness: A Systematic Survey of
+Starvation and Resource Allocation in FCFS, Priority,
+and Round Robin CPU Scheduling
+Summary For your review paper, you should consider a minimum of 5-7 distinct
+datasets, including 2-3 real-world traces (e.g., from SPEC CPU 2017 or the Grid
+Workload Archive) and 2-3 synthetic workloads to test boundary conditions.
+Necessary parameters for evaluating fairness include primary performance metrics
+(Average Waiting Time, Turnaround Time, Response Time, Throughput) and fairness
+specific metrics like Jain's Fairness Index and the Gini Index. For secondary
+evaluation, useful metrics include algorithm overhead, context switch frequency,
+CPU utilization, and energy consumption to assess broader resource allocation
+impacts.
+1. Introduction to Fairness in CPU Scheduling: Concepts and Challenges
+Fairness in CPU scheduling is a fundamental yet complex dimension of operating system
+design. While traditional scheduling evaluation has focused on performance metrics like
+throughput and turnaround time, fairness has emerged as an independent and critical criterion
+requiring systematic quantification and analysis 
+1
+. This section establishes the conceptual
+framework for understanding fairness, defines starvation in the context of classical algorithms,
+and outlines the specific challenges in measuring fairness across different scheduling paradigms.
+1.1 Defining Fairness in Scheduling Contexts
+Fairness in CPU scheduling can be conceptualized as the equitable distribution of processor
+resources among competing processes. Unlike performance metrics that aim for optimization
+(e.g., minimizing response time), fairness metrics seek to measure the equality or proportionality
+of resource allocation. The challenge lies in its multidimensional nature—what constitutes "fair"
+allocation depends on system objectives and process characteristics.
+In the classic algorithms under review, fairness manifests in distinct ways:
+• 
+First-Come, First-Served (FCFS) provides fairness by treating all processes equally based on
+2
+arrival time, giving each an equal opportunity to run in sequential order 
+. However, this
+simplistic temporal fairness can lead to the "convoy effect," where short processes behind
+long ones suffer extended waiting times, revealing a limitation of this approach.
+• 
+Round Robin (RR) implements fairness through time-slicing, ensuring every process
+receives an equal share of CPU time in a cyclic fashion. This prevents any single process from
+monopolizing the CPU 
+1
+.
+1
+AI Generated
+Supported by SciMaster
+• 
+Priority Scheduling introduces a hierarchical model where CPU attention is proportional to
+assigned importance levels. While this allows for differentiated treatment, it inherently
+creates a fairness gradient that can systematically disadvantage lower-priority processes 
+1.2 Starvation: The Antithesis of Fairness
+2
+.
+Starvation represents the most severe violation of fairness, occurring when a process is
+indefinitely denied access to CPU resources. Its presence varies significantly across algorithms:
+Algorithm
+FCFS
+Round Robin
+Priority
+Scheduling
+Starvation
+Risk
+No
+No
+Fairness Implication
+All processes eventually execute, but waiting times can be
+highly variable.
+Cyclic allocation with a time quantum guarantees
+bounded waiting times and eventual execution for all
+processes 
+1
+.
+Yes
+Low-priority processes may wait indefinitely if higher
+priority processes continuously arrive, a problem known
+as indefinite blocking 
+3
+.
+This fundamental fairness violation in priority scheduling has led to mitigation strategies like
+aging, where a process's priority gradually increases the longer it waits in the ready queue,
+ensuring it eventually gets scheduled 
+3
+. The analysis of starvation is thus central to quantifying
+fairness, as it directly measures the failure to provide a basic level of service.
+1.3 Quantification Challenges and Fairness Metrics
+Quantifying fairness presents unique challenges distinct from performance evaluation. While
+metrics like turnaround time have straightforward definitions, fairness metrics must capture
+distributional properties of resource allocation across multiple processes over time.
+Several established metrics are used:
+• 
+• 
+• 
+Jain's Fairness Index (JFI): This index measures the equality of resource allocation, with
+values from 0 (complete unfairness) to 1 (perfect fairness). It is independent of population
+size and scale, making it widely applicable 
+4
+.
+Response Time: In CPU scheduling, the response time—the interval between a process's
+arrival and its initial execution—serves as a direct fairness indicator, particularly for
+interactive systems 
+5
+.
+Starvation Detection: A binary or count-based metric identifying processes that experience
+excessive or unbounded waiting.
+2
+AI Generated
+Supported by SciMaster
+The core evaluation challenges include:
+1. 
+2. 
+3. 
+Metric Selection Trade-offs: Different metrics capture different aspects (e.g., equality vs.
+inequality), influencing the assessment outcome.
+Temporal Dynamics: Fairness must be evaluated both instantaneously and over the long
+term, which many traditional metrics struggle to capture.
+Performance-Fairness Trade-off: A fundamental tension exists; algorithms that minimize
+average waiting time often do so at the expense of fairness, while those maximizing fairness
+may sacrifice efficiency 
+4
+.
+1.4 Dataset and Evaluation Parameter Requirements
+A robust analysis requires diverse datasets to test algorithms under various workload
+characteristics. Real-world traces are essential for practical relevance, while synthetic datasets
+allow testing of boundary conditions.
+• 
+Real-World Traces: Public workload archives provide realistic data. The Grid Workload
+Archive (GWA), for instance, contains traces from multiple grid environments with millions
+of jobs, capturing diverse user and job patterns 
+6
+. Standard benchmark suites like SPEC CPU
+2017, which includes 43 benchmarks derived from real applications, are also valuable for
+generating comparable, compute-intensive workloads 
+7
+• 
+.
+Synthetic Workloads: Custom datasets should be generated to test specific scenarios, such
+as mixed CPU-bound/I/O-bound processes, varying arrival patterns (bursty vs. uniform), and
+different priority distributions.
+For a comprehensive evaluation, the analysis should employ multiple workload scenarios
+(low, medium, high intensity) to assess how fairness scales with system load.
+A thorough evaluation must consider parameters from multiple dimensions:
+Primary Performance & Fairness Parameters:
+1. 
+2. 
+3. 
+4. 
+1. 
+2. 
+3. 
+1. 
+2. 
+Average Waiting Time (AWT): Total time processes spend in the ready queue.
+Average Turnaround Time: Total time from process submission to completion.
+Average Response Time: Time from arrival to first execution; a key fairness indicator 
+Throughput: Number of processes completed per unit time.
+Fairness-Specific Parameters:
+Maximum Waiting Time: Identifies worst-case service quality.
+Waiting Time Variance: Measures consistency of treatment.
+Starvation Incidence: Detection of processes experiencing indefinite waiting 
+System Efficiency Parameters:
+CPU Utilization: Measures resource usage efficiency.
+Context Switch Frequency: Impacts overhead and system responsiveness.
+3
+.
+5
+.
+3
+AI Generated
+Supported by SciMaster
+1.5 Conceptual Framework for Fairness Analysis
+Analyzing fairness in CPU scheduling requires a multidimensional framework that considers:
+1. 
+2. 
+3. 
+4. 
+Algorithmic Properties: The intrinsic fairness and starvation guarantees of each scheduling
+policy.
+Workload Sensitivity: How fairness metrics change with different process mixes and arrival
+patterns.
+Temporal Analysis: Evaluation of both short-term and long-term fairness behavior.
+Trade-off Assessment: Quantitative analysis of the relationship between efficiency metrics
+(e.g., turnaround time) and fairness metrics (e.g., response time).
+This framework acknowledges that fairness is not an absolute property but a spectrum of
+behaviors that must be evaluated in context. The subsequent analysis applies this framework to
+quantify fairness in FCFS, Priority, and Round Robin scheduling, identifying their respective
+strengths, limitations, and suitability for different application domains.
+2. Evaluation Parameters and Metrics for Fairness Assessment
+This section provides a comprehensive framework for evaluating fairness in CPU scheduling
+algorithms, encompassing traditional performance metrics, fairness-specific indices, and
+mechanisms for detecting starvation. A holistic assessment must consider both system efficiency
+and the equitable distribution of resources among processes.
+2.1 Primary Performance Evaluation Parameters
+CPU scheduling algorithms are traditionally evaluated using five core parameters that
+measure system efficiency and user-perceived performance. These metrics serve as the
+foundation for any comparative analysis.
+Parameter
+CPU
+Utilization
+Throughput
+Turnaround
+Time
+Waiting Time
+Definition
+Percentage of time the CPU is actively
+executing processes.
+Measurement Goal
+Maximize (typically 40% to 90%
+Number of processes completed per
+unit of time. Maximize 
+depending on system load) 
+1
+Total time from process submission to
+completion, including both waiting
+and execution time.
+3
+.
+1
+.
+Minimize. Mathematically, 
+T
+=
+T +
+Twaiting
+5
+Tturnaround=Tburst+TwaitingT_{\text{turnaround}} = T_{\text{burst}} + T_{\text{waiting}}
+turnaround
+Time a process spends in the ready
+queue before execution.
+burst
+Minimize. This is a key metric
+influenced directly by the
+scheduling algorithm 
+1
+3
+.
+.
+4
+AI Generated
+Supported by SciMaster
+Parameter
+Response
+Time
+Definition
+Time from a command's issuance to
+the commencement of the first
+response, critical for interactive
+systems.
+Measurement Goal
+Minimize 
+1
+3
+.
+The average waiting time and average turnaround time are primary indicators of a
+scheduler's efficiency, while the average response time is closely linked to fairness, as it reflects
+how quickly a process receives initial service 
+5
+.
+2.2 Fairness-Specific Metrics
+Beyond raw performance, specialized metrics are required to quantify the equity of resource
+4
+allocation. A key challenge is that performance and fairness are often at odds in scheduling 
+.
+Jain's Fairness Index (JFI) is a widely referenced metric for measuring the equality of
+resource distribution. It is calculated as:
+(
+n
+∑i=1
+x )
+i 2
+f(X)=(∑i=1nxi)2n⋅∑i=1nxi2f(X) = \frac{(\sum_{i=1}^{n} x_i)^2}{n \cdot \sum_{i=1}^{n} x_i^2}
+f(X) = n⋅
+n
+∑i=1
+xi
+xix_i
+iii
+x
+i
+2
+nnn
+where  is the resource share received by the -th user or process, and  is the total number
+of users. The index ranges from  
+1/
+n1/n
+1/n
+independent, bounded, and applicable to any population size 
+(worst case) to 1 (perfect fairness), and it is scale
+8
+4
+9
+.
+The Gini Index is another measure of inequality, ranging from 0 (perfect equality) to 1
+(maximum inequality). It is defined as:
+1
+G=12n2xˉ∑i=1n∑j=1n∣xi−xj∣G = \frac{1}{2n^2\bar{x}} \sum_{i=1}^{n} \sum_{j=1}^{n} |x_i - x_j|
+∑
+n
+∑
+n
+i
+G= ∣x−
+2n2xˉ
+xˉ
+xˉ\bar{x}
+i=1
+j=1
+x ∣j
+where  is the average resource allocation. Unlike JFI, a lower Gini value indicates greater
+fairness.
+2.3 Starvation Detection and Analysis
+Starvation, or indefinite blocking, is a critical failure of fairness where a process is prevented
+from ever receiving the CPU. Its detection and quantification are essential for evaluating
+algorithms like Priority Scheduling, which is particularly susceptible to this problem 
+• 
+2
+3
+.
+Starvation as a Criterion: Comparative analyses often include "Starvation" as a simple yes/
+no criterion for different algorithms. For instance, First-Come-First-Served (FCFS) and Round
+Robin (RR) typically have "No" starvation, while Priority and Shortest Job First (SJF)
+algorithms often have "Yes" 
+10
+1
+.
+5
+AI Generated
+Supported by SciMaster
+• 
+• 
+Mechanisms and Solutions: A common solution to starvation in priority-based systems is
+aging, where a process's priority is gradually increased the longer it waits in the ready
+queue, ensuring it eventually gets scheduled 
+2
+3
+.
+Limitations of Metrics: It is important to note that fairness metrics can sometimes
+misrepresent starvation and discrimination. Therefore, schedulers should be evaluated by
+considering both performance and fairness metrics simultaneously to avoid misleading
+conclusions about their effectiveness 
+11.
+2.4 Secondary Metrics for Resource Allocation Analysis
+A comprehensive evaluation should also consider secondary metrics that provide insight
+into system behavior and implementation trade-offs.
+• 
+• 
+• 
+• 
+• 
+2
+Scheduling Overhead: The time spent making scheduling decisions versus executing
+processes. For example, in Round Robin, setting the time quantum too short increases this
+overhead 
+.
+Context Switch Frequency: The rate at which the CPU switches between processes, which
+contributes to overhead.
+Algorithm Complexity: The implementation and operational difficulty, ranging from "Not
+complex" for FCFS to "Most Complex" for Multilevel Feedback Queue Scheduling 
+10.
+Preemption: Whether an executing process can be interrupted. This is a key differentiator
+between algorithm variants (e.g., preemptive vs. non-preemptive priority scheduling) and
+affects responsiveness and fairness 
+10.
+Convoy Effect: A phenomenon in FCFS where short processes suffer long waits behind a
+single long process, leading to high average waiting times 
+2
+2.5 Datasets and Workloads for Evaluation
+1
+.
+Robust evaluation requires testing algorithms against diverse workloads. Two primary
+sources are synthetic datasets and real-world traces.
+Synthetic Datasets allow for controlled experimentation with specific characteristics. A
+common approach is to generate process burst times from various probability distributions (e.g.,
+Normal, Exponential, Uniform, Pareto) to create diverse workload clusters 
+5
+. These datasets can
+be engineered to include parameters like arrival time, burst time, previous CPU burst length, I/O
+wait time, priority level, and memory consumption 
+12.
+Real-World Traces provide authenticity. Notable archives include:
+• 
+• 
+The Grid Workload Archive (GWA): Contains traces from nine grid environments,
+encompassing over 7 million jobs. These traces are characterized by single-node jobs
+arriving in "bags-of-tasks," providing realistic data for scheduling evaluation 
+6
+.
+SPEC CPU2017: An industry-standard benchmark suite containing 43 compute-intensive
+workloads derived from real applications. It measures both single-task completion time
+6
+AI Generated
+Supported by SciMaster
+(SPECspeed) and system throughput (SPECrate), offering a comprehensive way to stress CPU
+7
+and memory subsystems under different scheduling policies 
+.
+For a thorough analysis, a study should utilize a mix of synthetic workloads (to test specific
+boundary conditions and distributions) and real-world traces (to validate performance in
+practical scenarios). This dual approach helps ensure that findings on fairness and starvation are
+both generalizable and applicable.
+3. Datasets and Workload Patterns for Scheduling Algorithm Analysis
+A robust analysis of CPU scheduling algorithms, particularly concerning fairness and
+starvation, requires datasets that accurately reflect the complexity of real-world computing. This
+section outlines the types of datasets and workload characteristics necessary for evaluating First
+Come-First-Serve (FCFS), Priority, and Round Robin scheduling. The focus is on identifying key
+parameters and sources that can support a meaningful comparative study.
+3.1 Core Evaluation Parameters and Metrics
+Before selecting datasets, it is essential to define the parameters and metrics that the data
+must support for a fairness-focused evaluation. The primary metrics fall into two categories:
+efficiency and fairness.
+Efficiency Metrics quantify the performance of the scheduling algorithm in utilizing system
+resources. The most commonly used metrics are:
+• 
+• 
+• 
+• 
+Average Waiting Time: The total time a process spends waiting in the ready queue before
+5
+execution. Minimizing this is a key goal for efficiency
+T
+10
+1
+.
+Average Turnaround Time: The total time from a process's arrival to its completion,
+encompassing both waiting time and execution time. It is mathematically defined as
+5
+=
+T +
+Twaiting
+1
+Tturnaround=Tburst+TwaitingT_{turnaround} = T_{burst} + T_{waiting}
+turnaround
+burst
+.
+Fairness Metrics assess how equitably resources are allocated among competing processes.
+5
+Average Response Time: Defined as the interval between a process's arrival and its first
+execution on the CPU. A lower average response time is generally interpreted as indicating
+fairer job selection
+4
+.
+Starvation: A qualitative but critical fairness criterion indicating whether a process can be
+indefinitely postponed. This is a noted disadvantage of Priority scheduling, where lower
+priority processes may starve, but is generally not a problem for FCFS or Round Robin
+2
+10
+.
+Jain’s Fairness Index: A well-known quantitative metric for measuring the fairness of
+resource allocation across users or processes
+1
+• 
+4
+13.
+3
+Therefore, any dataset must provide, at minimum, the arrival time and burst time for each
+process to calculate these core metrics. For Priority scheduling analysis, a priority value for each
+process is also required.
+7
+AI Generated
+Supported by SciMaster
+3.2 Sources for Datasets and Workloads
+Given the urgent deadline, leveraging existing, well-characterized datasets is the most
+practical approach. The provided facts point to two primary sources: synthetically generated
+data and archived real-world traces.
+1. Synthetic Workload Generation For controlled and systematic analysis, generating
+synthetic workloads is highly effective. One detailed methodology involves creating a diverse
+dataset of process burst times derived from various probability distributions
+5
+. This approach
+allows for testing algorithms under specific, repeatable conditions.
+• 
+• 
+Distributions for Burst Times: The study generates clusters of data based on single
+distributions (e.g., Normal, Exponential, Uniform, Pareto) and multi-modal distributions
+(e.g., Bimodal, Trimodal) to represent heterogeneous workloads
+5
+.
+Dataset Structure: Each cluster can consist of 100 test cases, with each case containing 100
+integer burst times. These values are often clipped to a practical range (e.g., 1 to 500 time
+units) and normalized
+5
+• 
+.
+Additional Parameters: To fully evaluate Priority scheduling, a priority value must be
+assigned to each synthetic process. Furthermore, for a more comprehensive analysis,
+parameters like I/O wait time or memory consumption can be incorporated, as seen in
+synthetic datasets designed to mimic real-world traces
+12.
+2. Real-World and Benchmark Traces To validate findings against practical scenarios, real
+world workload traces are indispensable.
+• 
+Grid Workload Archive (GWA): This archive contains traces from several grid computing
+6
+environments, comprising millions of jobs submitted over years of operation
+. These traces
+are characterized by single-node jobs arriving in "bags-of-tasks," providing a realistic view of
+large-scale, distributed workload patterns
+6
+. Specific traces like GWA-T-4 (AuverGrid) have
+been used as a reference for generating synthetic data or for direct evaluation
+• 
+12
+6
+.
+SPEC CPU Benchmarks: The SPEC CPU 2017 benchmark suite is an industry standard for
+evaluating CPU-intensive performance
+7
+. It provides a set of 43 benchmarks derived from real
+applications, divided into suites that measure both single-task completion time (SPECspeed)
+and system throughput (SPECrate)
+7
+. While primarily used for hardware performance
+evaluation, these standardized, compute-intensive workloads can serve as a consistent and
+challenging dataset for comparing scheduling algorithm behavior under heavy load.
+3.3 Guidance on Number and Selection of Datasets
+1. 
+For a survey paper with a tight deadline, a manageable yet representative set of 3-4 distinct
+datasets is recommended to demonstrate the algorithms' behavior across different conditions.
+A Synthetic Dataset with Controlled Variance: Create or select one synthetic dataset based
+on a common distribution like Exponential or Uniform. This provides a clean baseline for
+8
+AI Generated
+Supported by SciMaster
+initial comparison and calculation of the core metrics (Average Waiting, Turnaround, and
+Response Times).
+2. 
+3. 
+4. 
+A Synthetic Dataset with High Heterogeneity: Create or select a second synthetic dataset
+using a multi-modal or heavy-tailed distribution (e.g., Bimodal or Pareto). This tests the
+robustness of the algorithms, particularly for fairness, when a mix of very short and very long
+processes are present.
+A Real-World Trace: Incorporate one dataset from the Grid Workload Archive (e.g., GWA-T-4).
+This grounds the analysis in real system behavior and tests the algorithms on workload
+patterns they were not explicitly designed for.
+(Optional) A Benchmark-derived Workload: If time permits, a subset of the SPEC CPU 2017
+benchmarks can be treated as a set of processes with known runtimes, providing a link to
+industry-standard performance evaluation.
+3.4 Parameters for Dataset Characterization
+When describing your chosen datasets in the paper, specify the following characteristics to
+allow for meaningful interpretation of results:
+• 
+• 
+• 
+• 
+• 
+Process Count: The total number of processes in the workload.
+Arrival Time Pattern: Whether arrivals are uniform, Poisson (random), or bursty.
+Burst Time Distribution: The statistical distribution and range of CPU burst times (e.g.,
+Exponential with mean 50, range 1-500).
+Priority Distribution (if applicable): How priorities are assigned (e.g., uniform from 1-5, or
+weighted towards high/low priority).
+Key Descriptive Statistics: The mean, median, and standard deviation of burst times, as
+these directly influence waiting and turnaround times.
+3.5 Secondary Evaluation Considerations
+Beyond the primary fairness and efficiency metrics, your analysis can be enriched by
+discussing secondary effects observable from the same datasets:
+• 
+• 
+• 
+Scheduling Overhead: Note the impact of preemption and context switching, especially for
+2
+Round Robin with small time quanta
+10.
+Algorithm Complexity: Briefly discuss the implementation and operational complexity of
+each algorithm as a qualitative factor
+2
+10.
+Performance under Load: Observe how metrics degrade or change as the number of
+processes or the system load increases across your different datasets.
+By selecting a small set of complementary datasets defined by the parameters above, you
+can efficiently conduct a focused analysis that quantifies fairness through standard metrics and
+provides insightful observations on the behavior of FCFS, Priority, and Round Robin schedulers.
+9
+AI Generated
+Supported by SciMaster
+4. Methodology for Fairness Quantification Across Scheduling
+Algorithms
+This section outlines the systematic experimental methodology for quantifying and
+comparing fairness across First-Come-First-Served (FCFS), Priority, and Round Robin (RR) CPU
+scheduling algorithms. The methodology encompasses simulation setup, parameter selection,
+fairness metric calculation procedures, and statistical analysis techniques for evaluating
+algorithm performance under diverse workload conditions.
+4.1 Simulation Framework and Experimental Setup
+The experimental methodology employs a discrete-event simulation framework to model
+CPU scheduling behavior across the three target algorithms. The simulation environment must
+accurately represent process arrival patterns, burst time distributions, and priority assignments
+to ensure realistic evaluation conditions.
+Key Simulation Parameters:
+1. 
+Process Characteristics:
+◦ 
+◦ 
+◦ 
+◦ 
+Arrival Time: Modeled using a Poisson process to simulate realistic, random job
+submissions.
+5
+Burst Time (Execution Time): Generated from various distributions to reflect different
+workload patterns, including exponential, uniform, and heavy-tailed (e.g., Pareto)
+distributions 
+.
+Priority Levels: For Priority scheduling, both static and dynamic priority assignments
+are considered. Priorities can be numerical, with a common convention being lower
+numbers representing higher priority 
+3
+.
+Time Quantum: For Round Robin, the fixed time slice allocated to each process is a
+critical parameter. Its size must be varied (e.g., from 2ms to 100ms) to analyze its impact
+on fairness and efficiency 
+2
+.
+2. 
+System Configuration:
+◦ 
+◦ 
+◦ 
+◦ 
+A single CPU core environment is simulated.
+The ready queue is assumed to have unlimited capacity to avoid artifacts from queue
+overflow.
+Both preemptive and non-preemptive scheduling modes are evaluated where
+1
+applicable (e.g., preemptive vs. non-preemptive Priority) 
+.
+Context switch overhead, a small fixed time cost incurred when the CPU switches
+between processes, is included (typically 0.1-1ms per switch).
+3. 
+Workload Scenarios:
+◦ 
+◦ 
+Low-load conditions (CPU utilization < 30%)
+Medium-load conditions (CPU utilization 30-70%)
+10
+High-load conditions (CPU utilization > 70%)
+Mixed workloads with varying burst time patterns and a mix of CPU-bound and I/O
+bound processes 2.
+4.2 Datasets and Workload Generation
+For a comprehensive evaluation, a combination of synthetic and real-world inspired datasets
+should be employed. This ensures both controlled experimentation and practical relevance. The
+goal is to test the algorithms under a variety of conditions that stress different aspects of fairness
+and starvation.
+Dataset Categories and Generation:
+Dataset
+Type Purpose Generation Method / Source
+Synthetic
+Workloads
+Controlled
+parameter
+variation to isolate
+specific effects
+(e.g., impact of
+burst time
+distribution).
+Custom generation. Burst times can be drawn from
+single distributions (Normal, Exponential, Uniform,
+Pareto, Gamma) or multi-modal distributions (Bimodal,
+Trimodal) to create heterogeneous subpopulations 5.
+Each generated dataset should contain a sufficient
+number of processes (e.g., 100-1000) for meaningful
+statistical analysis.
+Real-World
+Inspired
+Traces
+To evaluate
+algorithms under
+patterns observed
+in actual systems.
+While specific trace files from sources like the Grid
+Workload Archive (GWA) are mentioned in the broader
+literature for scheduling evaluation 6, the core analysis
+for this paper can be grounded in generating synthetic
+workloads that mimic key real-world characteristics.
+For instance, workloads can be designed to reflect the
+"bags-of-tasks" behavior and single-node job
+predominance found in grid traces 6.
+Benchmark
+Derived
+Workloads
+To simulate
+compute-intensive,
+standardized tasks.
+Workload characteristics can be inspired by the goals of
+industry-standard benchmarks like SPEC CPU, which
+measure both single-task completion time (SPECspeed)
+and system throughput (SPECrate) under integer and
+floating-point intensive loads 7.
+Dataset Selection Rationale: A range of datasets should be created to cover the workload
+scenarios defined above. Each scenario should be tested with multiple random seeds (e.g., 30
+runs) to ensure statistical robustness and account for variance.
+◦ 
+◦ 
+AI Generated
+Supported by SciMaster
+11
+4.3 Fairness Metrics and Evaluation Parameters
+The methodology employs a multi-dimensional evaluation approach, combining traditional
+performance metrics with specialized fairness and starvation measures derived from the analysis
+of scheduling algorithms.
+Primary Performance Metrics 51:
+Average Waiting Time ( ): The average time processes spend waiting in the ready
+queue. It is a direct indicator of scheduling efficiency.
+Average Turnaround Time ( ): The total time from process arrival to completion.
+It is a key measure of overall system performance as perceived by the user.
+Average Response Time ( ): The time from a process's arrival to its first execution.
+This is particularly important for interactive systems and is highlighted as a primary metric
+for quantifying fairness in batch processing contexts 5.
+Specialized Fairness and Starvation Metrics:
+Jain's Fairness Index (JFI): A standard metric for measuring the equality of resource
+allocation. It is calculated over a resource share (e.g., CPU time received) across all processes
+4.
+A value of 1 indicates perfect fairness.
+Starvation Analysis Metrics: Since starvation is a core focus, specific measures must be
+tracked: 
+Maximum Waiting Time: Identifies the worst-case delay experienced by any process,
+directly revealing potential starvation.
+Starvation Count: The number of processes that exceed a defined threshold of
+excessive waiting time (e.g., waiting time > 10 * average burst time). This is crucial for
+evaluating Priority scheduling, which is prone to indefinite blocking or starvation of low
+priority tasks 3.
+1. TwaitT_{wait} Twait
+Twait=1n∑i=1n(Tstarti−Tarrivali)T_{wait} = \frac{1}{n}\sum_{i=1}^{n}(T_{start_i} - T_{arrival_i}) T = wait (T − n
+1
+i=1
+∑
+n
+starti
+T ) arrivali
+1. TturnaroundT_{turnaround} Tturnaround
+Tturnaround=Tcompletion−TarrivalT_{turnaround} = T_{completion} - T_{arrival} T = turnaround T − completion Tarrival
+1. TresponseT_{response} Tresponse
+Tresponse=Tfirstrun−TarrivalT_{response} = T_{firstrun} - T_{arrival} T = response T − firstrun Tarrival
+• 
+JFI=(∑i=1nxi)2n⋅∑i=1nxi2JFI = \frac{(\sum_{i=1}^{n} x_i)^2}{n \cdot \sum_{i=1}^{n} x_i^2} JFI=n⋅ x ∑i=1
+n
+i
+2
+( x) ∑i=1
+n
+i 2
+• 
+◦ 
+◦ 
+AI Generated
+Supported by SciMaster
+12
+AI Generated
+Supported by SciMaster
+◦ 
+Aging Effectiveness (for Priority): If aging is implemented as a solution to starvation,
+its effectiveness can be measured by tracking how the priority of long-waiting processes
+increases and whether it eventually leads to their execution 
+3
+.
+Algorithm-Specific Fairness Evaluation:
+• 
+• 
+FCFS: Fairness is evaluated based on its adherence to arrival order and its guarantee of
+2
+eventual execution for all processes 
+2
+. The "Convoy Effect," where a long process delays
+many short ones, is a key fairness disadvantage to quantify through increased variance in
+waiting times 
+2
+.
+Round Robin: Fairness is assessed by the equality of CPU time shares and the absence of
+starvation 
+. The impact of the time quantum size is critical; a quantum that is too long can
+lead to poor response for short processes, while one that is too short increases overhead 
+2
+.
+Priority Scheduling: Fairness evaluation must explicitly measure the discrimination against
+low-priority processes. The core metric is the starvation count for low-priority jobs in the
+presence of a continuous stream of high-priority jobs 
+• 
+2
+.
+4.4 Statistical Analysis and Comparison Methodology
+To ensure robust conclusions, the following statistical analysis techniques are employed:
+Experimental Design:
+1. 
+2. 
+3. 
+Factor Variation: Systematically vary independent factors: scheduling algorithm (FCFS,
+Priority, RR), workload intensity (low, medium, high), and algorithm parameters (time
+quantum for RR, priority scheme).
+Replication: Conduct a minimum of 30 independent simulation runs per experimental
+configuration, each with a different random seed, to account for stochastic variance.
+Control: Keep system configuration (context switch cost, etc.) constant across algorithm
+comparisons for a fair assessment.
+Comparative Analysis Framework: The analysis follows a structured flow: For each
+workload scenario, simulate all three algorithms, calculate the full suite of metrics defined
+above, perform statistical tests to determine if observed differences are significant, and finally
+rank the algorithms based on the chosen fairness and performance criteria.
+Statistical Tests:
+1. 
+2. 
+3. 
+Analysis of Variance (ANOVA): Used to determine if there are statistically significant
+differences in the mean values of a metric (e.g., average response time) across the three
+scheduling algorithms.
+Post-hoc Tests (e.g., Tukey's HSD): If ANOVA shows a significant difference, post-hoc tests
+identify which specific pairs of algorithms differ.
+Non-parametric Tests (e.g., Kruskal-Wallis): Applied when the assumption of normally
+distributed metric data is violated.
+13
+AI Generated
+Supported by SciMaster
+4. 
+Confidence Intervals: Report 95% confidence intervals for all primary metrics to convey the
+precision of the estimates.
+Trade-off Analysis: The inherent trade-off between efficiency (e.g., low average waiting
+4
+time) and fairness (e.g., low starvation count, low response time variance) is a central theme 
+.
+Results should be analyzed to identify these trade-offs explicitly, illustrating scenarios where one
+algorithm provides a better balance than others.
+4.5 Validation and Robustness
+To ensure methodological rigor:
+1. 
+Convergence Testing: Verify that key metrics stabilize as the simulation run length or
+number of processes increases.
+2. 
+3. 
+Parameter Sensitivity Analysis: Assess how sensitive the fairness conclusions are to
+changes in critical parameters like the RR time quantum or the priority aging rate.
+Sanity Checks: Compare results for well-understood corner cases (e.g., FCFS with all
+processes arriving simultaneously) against theoretical expectations to validate the
+simulation logic.
+This methodology provides a systematic and fact-based framework for quantifying fairness
+and starvation across FCFS, Priority, and Round Robin scheduling algorithms, enabling a
+rigorous, multi-faceted comparison under diverse workload conditions.
+5. Analysis of Starvation Patterns and Resource Allocation Fairness
+This section analyzes how different CPU scheduling algorithms manage the critical issues of
+process starvation and the equitable distribution of CPU time. It examines the inherent
+mechanisms that lead to starvation, particularly in priority-based systems, and evaluates the
+fairness characteristics of FCFS and Round Robin algorithms.
+5.1 Evaluation Framework for Fairness and Starvation Analysis
+A systematic evaluation requires well-defined parameters and metrics. The core parameters
+3
+for any process include its arrival time, burst time (execution time), and priority value 
+. For
+scheduling algorithms themselves, key parameters are the time quantum (for Round Robin) and
+whether preemption is allowed 
+5
+.
+• 
+The performance of these algorithms is measured using established metrics, which generally
+fall into two categories: efficiency and fairness. Standard efficiency metrics include:
+Average Waiting Time (AWT): The total time a process spends in the ready queue.
+• 
+• 
+Average Turnaround Time (ATT): The total time from a process's submission to its
+5
+completion (burst time + waiting time) 
+1
+.
+Throughput: The number of processes completed per unit time 
+• 
+1
+3
+.
+CPU Utilization: The percentage of time the CPU is actively executing processes 
+1
+.
+14
+AI Generated
+Supported by SciMaster
+For fairness, a primary metric is the Average Response Time, defined as the time from a
+5
+process's arrival to its first execution 
+. This metric directly reflects how quickly different
+processes receive initial service. Research also highlights Jain's Fairness Index as a standard
+mathematical tool for quantifying fairness in resource allocation, where a value of 1 indicates
+perfect fairness 
+4
+13. However, studies caution that fairness metrics can sometimes misrepresent
+underlying issues like starvation, emphasizing the need to consider both performance and
+fairness simultaneously for an accurate assessment 
+11.
+5.2 Starvation in Priority Scheduling Algorithms
+Priority scheduling allocates the CPU based on assigned priority levels, which provides a
+2
+f
+lexible mechanism for handling processes of differing importance 
+3
+. However, this approach
+introduces a significant fairness problem known as indefinite blocking or starvation
+3
+. In this
+scenario, a continuous stream of higher-priority processes can prevent a lower-priority process
+from ever receiving the CPU 
+2
+3
+. Comparative analyses explicitly list starvation as a "Yes" risk for
+both preemptive and non-preemptive priority scheduling 
+14
+10
+1
+.
+This is not merely a theoretical concern but a practical issue observed in real systems. For
+instance, studies have identified and analyzed starvation for CPU-bound processes in the Linux
+kernel's O(1) and Completely Fair Scheduler (CFS) when network I/O-bound processes are
+present 
+15. The root cause often involves how the scheduler accounts for and prioritizes
+different types of workload.
+A common solution to mitigate starvation in priority systems is aging, where the priority of a
+waiting process is gradually increased over time until it eventually gets scheduled 
+2
+3
+. This
+demonstrates the inherent trade-off: introducing dynamic fairness through aging can reduce
+scheduling efficiency for the highest-priority tasks.
+5.3 Resource Allocation Fairness in FCFS and Round Robin
+In contrast to priority scheduling, FCFS and Round Robin are explicitly designed with fairness
+as a core principle, though they achieve it in different ways.
+FCFS (First-Come-First-Serve) provides fairness by treating all processes equally based on
+2
+their order of arrival, guaranteeing that every process will eventually execute 
+strength is the explicit "No" rating for starvation 
+10
+1
+1
+. Its comparative
+. However, this fairness in order does not
+translate to fairness in waiting time. FCFS can lead to the "convoy effect," where a short process
+arriving just after a very long process suffers a disproportionately long wait, which is problematic
+for systems requiring regular CPU intervals for users 
+2
+. Consequently, while fair in sequence, FCFS
+often results in poor average waiting times and is considered to have slow performance 
+10.
+Round Robin (RR) achieves fairness through time-slicing, giving each process in the ready
+2
+queue an equal share of the CPU in a cyclic manner 
+10. This design ensures there is no
+starvation, as every process is guaranteed regular service intervals 
+2
+10
+1
+. The performance of
+15
+AI Generated
+Supported by SciMaster
+each process is described as receiving a "fairly fixed time" 
+10. The fairness and efficiency of RR are
+highly dependent on the chosen time quantum. A quantum that is too short leads to high
+context-switching overhead and reduced CPU efficiency, while one that is too long degrades
+responsiveness for short processes and can resemble FCFS 
+2
+5
+.
+5.4 Comparative Analysis of Fairness Characteristics
+The table below summarizes the key fairness and starvation properties of the three
+algorithm types based on comparative analyses:
+Characteristic
+Primary Fairness
+Principle
+FCFS
+Order of arrival
+(FIFO)
+Starvation Risk No 
+10
+Round Robin
+Equal time slices
+2
+1 No 
+Key Fairness
+Strength
+Key Fairness
+Weakness
+Guaranteed
+eventual
+execution 
+Priority Scheduling
+Assignment of priority
+level
+10 Yes 
+2
+2
+Regular service
+intervals for all
+processes 
+2
+10
+1
+3
+2
+Respects defined
+process importance/
+urgency 
+Highly variable
+waiting times;
+convoy effect 
+2
+2
+5
+Performance depends
+critically on time
+quantum setting 
+2
+3
+Low-priority processes
+can be indefinitely
+postponed 
+5.5 Methodology for Empirical Evaluation
+To conduct a rigorous analysis of these fairness properties and starvation patterns, a
+structured experimental approach is needed. This involves generating or selecting appropriate
+workloads and measuring the defined metrics.
+Workloads and Datasets: A robust evaluation should use multiple datasets to test algorithm
+behavior under different conditions. Research indicates that studies often use synthetic
+workloads or trace data from real systems for this purpose 
+16.
+• 
+• 
+Synthetic Workloads: These allow for controlled experiments. A relevant approach is to
+generate burst times from various probability distributions (e.g., Normal, Exponential,
+Uniform) to create diverse test cases 
+5
+. Another method involves creating a synthetic dataset
+that mimics real-world traces, capturing parameters like arrival time, previous CPU burst
+length, I/O wait time, and priority level 
+12.
+Real-World Traces: The Grid Workload Archive (GWA) is a notable source, containing traces
+from production grid environments that have been used to evaluate scheduling policies 
+These provide realistic patterns of job arrivals and resource demands.
+6
+.
+Experimental Design: A standard methodology involves implementing the target
+algorithms (FCFS, RR with varying quanta, Priority with/without aging) and running them on the
+16
+AI Generated
+Supported by SciMaster
+same set of workloads. For each run, the core metrics—Average Waiting Time, Average
+5
+Turnaround Time, and Average Response Time—should be collected 
+. The results can then be
+analyzed to quantify trade-offs, such as how much efficiency (in terms of lower average waiting
+time) is gained in priority scheduling at the cost of increased starvation risk and unfairness for
+low-priority jobs. This analysis should also examine the sensitivity of Round Robin's performance
+to different time quantum values under various workload distributions.
+6. Recommendations and Future Research Directions
+Based on our comprehensive survey of fairness quantification in FCFS, Priority, and Round
+Robin scheduling algorithms, this section provides practical recommendations for dataset
+selection, metric application, and fairness evaluation. We also identify critical gaps in current
+evaluation approaches and suggest promising directions for future research in fairness-aware
+scheduling algorithm design.
+6.1 Dataset Selection and Benchmarking Strategy
+For effective fairness quantification, a multi-tiered dataset approach is advisable. This
+should combine synthetic workloads, which allow for controlled experimentation, with real
+world traces that capture authentic system behavior.
+Synthetic Workloads: To systematically analyze algorithm behavior, researchers can
+generate synthetic datasets with controlled statistical properties. For instance, one study created
+a diverse dataset of process burst times derived from various probability distributions, including
+Normal, Exponential, Uniform, and Pareto, as well as multi-modal clusters to simulate
+5
+heterogeneous workloads 
+. Each cluster in this study consisted of 100 test cases, with each case
+comprising 100 integer burst times, providing a structured basis for comparison 
+6
+5
+.
+Real-World and Benchmark Traces: Incorporating traces from production systems is crucial
+for realism. The Grid Workload Archive (GWA) is a valuable source, containing traces from
+multiple grid environments with millions of jobs submitted by thousands of users over many
+years 
+. These traces are distinct, often comprising single-node jobs arriving in "bags-of-tasks,"
+which is highly relevant for scheduling analysis 
+6
+. Furthermore, industry-standard benchmark
+suites like SPEC CPU 2017, which contains 43 benchmarks organized into suites for measuring
+both single-task completion time (SPECspeed) and throughput (SPECrate), provide a
+standardized basis for performance and fairness evaluation across different hardware 
+7
+.
+Dataset Size and Scope: While specific minimum counts are not prescribed, a robust
+evaluation should include workloads of varying scales and intensities to test algorithm
+performance under different conditions, from light to heavy load.
+6.2 Fairness Evaluation Parameters and Metrics
+A comprehensive fairness assessment requires a combination of established efficiency
+metrics and dedicated fairness indicators.
+17
+AI Generated
+Supported by SciMaster
+Core Performance and Fairness Metrics: The most commonly used metrics, as identified in
+the literature, are:
+• 
+• 
+• 
+Average Waiting Time: An indicator of efficiency, measuring the total time processes spend
+5
+waiting in the ready queue 
+1
+.
+Average Turnaround Time: Another efficiency metric, representing the total time from
+process arrival to completion 
+5
+1
+.
+Average Response Time: Widely used as a direct fairness indicator, measuring the time from
+a process's arrival to its first execution 
+5
+fairer job selection 
+5
+.
+4
+. A lower average response time is associated with
+Dedicated Fairness and Starvation Metrics: Beyond these core metrics, specific tools are
+needed to evaluate equitable treatment.
+• 
+Jain's Fairness Index: This is a recognized metric for quantifying the fairness of resource
+4
+allocation among multiple processes 
+13. It is calculated as:
+(
+n
+∑i=1
+x )
+i 2
+J(x)=(∑i=1nxi)2n∑i=1nxi2J(x) = \frac{(\sum_{i=1}^n x_i)^2}{n \sum_{i=1}^n x_i^2}
+J(x) = n
+n
+∑i=1
+x
+i
+2
+where $x_i$ is the resource allocation for process $i$.
+• 
+Starvation Analysis: A critical aspect of fairness evaluation. This involves monitoring
+whether processes, particularly those with low priority, are indefinitely blocked from
+execution. Priority scheduling is explicitly noted to suffer from this problem of starvation or
+indefinite blocking 
+2
+2
+3
+. Evaluation should include tracking the count or duration of waiting
+for low-priority processes.
+Secondary Evaluation Considerations: Researchers should also consider the trade-offs
+inherent in scheduling. For instance, algorithms like Round Robin that provide fairness by giving
+each process an equal share of the CPU may exhibit longer average waiting times compared to
+others 
+10. Evaluating throughput, CPU utilization, and scheduling overhead under different
+fairness constraints provides a more complete picture 
+2
+1
+.
+6.3 Gaps in Current Fairness Evaluation Approaches
+Our analysis of the literature reveals several limitations in prevailing methodologies:
+1. 
+2. 
+Potential for Metric Misrepresentation: There is a noted risk that fairness metrics can
+misrepresent the actual occurrence of job discrimination and starvation, which may lead to
+incorrect conclusions about a scheduler's effectiveness 
+11.
+Over-reliance on Aggregate Measures: Many evaluations focus on aggregate metrics like
+average response time but may fail to capture dynamic unfairness or the experience of
+individual processes over short time scales.
+18
+AI Generated
+Supported by SciMaster
+3. 
+4. 
+Insufficient Context: Evaluations often assess fairness in isolation without adequately
+considering the specific system context (e.g., interactive vs. batch systems) or the interplay
+with other critical metrics like energy consumption.
+Lack of Standardization: While sources like SPEC provide benchmarks for performance,
+there is a lack of standardized workload traces and methodologies specifically annotated for
+fairness evaluation across different research works.
+6.4 Future Research Directions
+To address these gaps and advance the field, we propose the following research directions:
+1. 
+2. 
+3. 
+4. 
+5. 
+Development of Context-Aware and Multi-Dimensional Metrics: Future work should
+create fairness metrics that adapt to different application domains (real-time, interactive,
+batch) and explicitly balance fairness with other objectives like efficiency, throughput, and
+energy consumption. This involves moving beyond single-number fairness indices.
+Enhanced Starvation Detection and Analysis: Research should focus on better methods for
+detecting, quantifying, and visualizing starvation, especially in complex schedulers like
+multilevel queues. This includes analyzing the conditions under which starvation occurs and
+developing dynamic mitigation strategies.
+Temporal and Dynamic Fairness Evaluation: New frameworks are needed to evaluate
+fairness not just as a final aggregate, but as a property that evolves over time. This includes
+studying short-term unfairness, recovery mechanisms, and fairness under transient, bursty
+workloads.
+Creation of Standardized Fairness Benchmarks: The community would benefit from an
+open, standardized suite of workload traces and scenarios specifically designed to stress-test
+fairness properties of schedulers, similar to how SPEC CPU stresses performance. This would
+improve reproducibility and comparative analysis.
+Fairness-Aware Algorithm Co-Design: Future scheduling algorithms should be designed
+with formal fairness guarantees from the outset. Research should explore how to integrate
+fairness constraints directly into scheduling logic while maintaining system efficiency and
+exploring configurable fairness-efficiency trade-offs.
+6.5 Practical Implementation Guidelines
+For researchers conducting fairness evaluations, we recommend:
+• 
+• 
+• 
+Employ a Multi-Metric Approach: Use a combination of metrics (e.g., average response
+time, Jain's index, starvation incidence) to avoid the bias of any single measure.
+Test Under Diverse Workloads: Evaluate algorithms using both synthetic workloads (with
+varied arrival and burst time distributions) and real-world traces to ensure conclusions are
+robust.
+Include a Baseline: Always compare new algorithms against classic baselines like FCFS,
+which provides a fundamental form of fairness by order of arrival, and Round Robin, which
+provides fairness through time-slicing 
+2
+1
+.
+19
+Report Comprehensive Configuration Details: Ensure reproducibility by thoroughly
+documenting all parameters, including workload characteristics, scheduling algorithm
+configurations (e.g., time quantum for RR, priority assignment scheme), and the exact
+definitions of all reported metrics.
+Advancing fairness in CPU scheduling requires treating it as a primary design constraint
+rather than a secondary consideration. By pursuing the directions outlined above, the
+community can develop more equitable, efficient, and predictable computing systems.
+7. Reference
+CPU Scheduling in Operating Systems - GeeksforGeeks, https://www.geeksforgeeks.org/
+operating-systems/cpu-scheduling-in-operating-systems/↩↩2↩3↩4↩5↩6↩7↩8↩9↩10
+↩11↩12↩13↩14↩15↩16↩17↩18↩19↩20↩21↩22↩23↩24↩25↩26↩27
+Advantages and Disadvantages of various CPU scheduling algorithms, https://
+www.geeksforgeeks.org/advantages-and-disadvantages-of-various-cpu-scheduling
+algorithms/↩↩2↩3↩4↩5↩6↩7↩8↩9↩10↩11↩12↩13↩14↩15↩16↩17↩18↩19↩20↩21
+↩22↩23↩24↩25↩26↩27↩28↩29↩30↩31↩32↩33↩34↩35↩36
+Operating Systems: CPU Scheduling, https://www.cs.uic.edu/~jbell/CourseNotes/
+OperatingSystems/5_CPU_Scheduling.html↩↩2↩3↩4↩5↩6↩7↩8↩9↩10↩11↩12↩13
+↩14↩15↩16↩17↩18↩19↩20↩21
+[PDF] Scheduling: Introduction - cs.wisc.edu, https://pages.cs.wisc.edu/~remzi/OSTEP/
+cpu-sched.pdf↩↩2↩3↩4↩5↩6↩7↩8↩9↩10↩11
+[PDF] arXiv:2308.10062v7 [cs.OS] 17 Dec 2024, https://arxiv.org/pdf/2308.10062↩↩2↩3
+↩4↩5↩6↩7↩8↩9↩10↩11↩12↩13↩14↩15↩16↩17↩18↩19↩20↩21↩22↩23↩24↩25↩26
+↩27↩28
+[PDF] The Grid Workloads Archive - Unina, http://wpage.unina.it/pescape/cit/new2511/
+GWA_FGCS.pdf↩↩2↩3↩4↩5↩6↩7↩8↩9↩10
+SPEC CPU ® 2017 benchmark, https://www.spec.org/cpu2017/↩↩2↩3↩4↩5↩6
+[PDF] Performance Evaluation and Comparison of Scheduling Algorithms ..., https://
+scispace.com/pdf/performance-evaluation-and-comparison-of-scheduling-1hmdbcq4ph.pdf
+↩
+[PDF] Performance Evaluation of Round Robin and Proportional Fair ..., https://
+ijssst.info/Vol-20/No-2/paper17.pdf↩
+Comparison of Different CPU Scheduling Algorithms in OS, https://
+www.geeksforgeeks.org/comparison-of-different-cpu-scheduling-algorithms-in-os/↩↩2↩3
+↩4↩5↩6↩7↩8↩9↩10↩11↩12↩13↩14↩15↩16↩17
+• 
+1. 
+2. 
+3. 
+4. 
+5. 
+6. 
+7. 
+8. 
+9. 
+10. 
+AI Generated
+Supported by SciMaster
+20
+Characteristics of Fairness Metrics and their Effect on Perceived Scheduler Effectiveness,
+https://doi.org/10.1080/1206212x.2010.11441974↩↩2↩3
+[PDF] Predicting CPU Burst Times with ML to Enhance Shortest Job First ..., https://
+zenodo.org/records/17131785/files/
+01092549%20IJCSIS%20Camera%20Ready%20Academia.pdf?download=1↩↩2↩3↩4
+Operating Systems Process Schedulers - Emergent Mind, https://
+www.emergentmind.com/topics/operating-systems-process-schedulers↩↩2↩3
+Mitigating starvation of Linux CPU-bound processes in the presence of network I/O,
+https://doi.org/10.1016/j.jss.2012.02.042↩
+On Linux starvation of CPU-bound processes in the presence of network I/O, https://
+doi.org/10.1016/j.compeleceng.2011.07.001↩
+[PDF] Benchmarks and Standards for the Evaluation of Parallel Job ..., https://
+surface.syr.edu/context/eecs/article/1014/viewcontent/download.pdf↩
+11. 
+12. 
+13. 
+14. 
+15. 
+16. 
+AI Generated
+Supported by SciMaster
+21

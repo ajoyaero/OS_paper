@@ -1,0 +1,106 @@
+​​Category 1: High-Performance Computing (HPC) & Grid Workload Archives​​These are excellent sources as they explicitly deal with jobs submitted to shared computing resources.
+
+​​Grid Workload Archive (GWA) Traces:​​
+
+​​Specific Traces:​​ GWA-T-4 (AuverGrid), GWA-T-12 (Nordic Grid), GWA-T-1 (LHCb), etc.
+​​Data Provided:​​ Submission time, wait time, runtime (execution time), number of CPUs used, user ID, requested resources.
+​​Derivation:​​
+arrival_time: Submission time.
+burst_time: Runtime.
+priority: Can be derived (e.g., shorter jobs might implicitly have higher priority in some systems, or policy-based priorities could be inferred from user/group IDs).
+​​Links:​​ Historically at gwa.ewi.tudelft.nl and various academic sites. Search "Grid Workload Archive" and specific trace names.
+​​Parallel Workloads Archive (PWA):​​
+
+​​Description:​​ A broader collection of logs from various parallel supercomputers and clusters (e.g., from Los Alamos, CTC, KTH).
+​​Data Provided:​​ Similar to GWA – submit time, wait time, run time, requested processors, memory, user/group info.
+​​Derivation:​​ Similar to GWA.
+​​Links:​​ www.cs.huji.ac.il/labs/parallel/workload/ (a primary source for many PWA traces).
+​​HPC Workload Traces (Specific Institutions):​​
+
+​​Description:​​ Logs from individual supercomputing centers not always aggregated into GWA/PWA.
+​​Examples:​​ LANL (Los Alamos National Lab) traces, LLNL (Lawrence Livermore National Lab) traces.
+​​Data Provided:​​ Job submission time, execution time, allocated resources (nodes/CPUs), queue names (can imply priority).
+​​Derivation:​​ Straightforward for arrival/burst. Priority might be inferred from queue assignment or explicit job priority flags if available.
+​​Links:​​ Often found on the websites of the supercomputing centers themselves or linked through research papers. Search "LANL workload trace," "LLNL job logs."
+​​Category 2: Cloud Computing & Virtual Machine Workloads​​These provide insight into diverse workloads running on shared infrastructure, often including heterogeneous tasks.
+
+​​Google Cluster Traces:​​
+
+​​Description:​​ Logs from large Google clusters. Although older, they are seminal for understanding cloud workloads.
+​​Data Provided:​​ Task submission time, start time, end time, requested CPU/memory, actual CPU/memory usage, job type.
+​​Derivation:​​
+arrival_time: Task submission time.
+burst_time: (End time - start time) or aggregated CPU usage.
+priority: Available in some versions, or inferable from job/task type.
+​​Links:​​ Look for "Google Cluster Trace v2" or later versions. Often hosted by institutions like Google itself or related research groups.
+​​Microsoft Azure Traces:​​
+
+​​Description:​​ More recent and massive traces from Microsoft's cloud infrastructure.
+​​Data Provided:​​ VM creation/deletion times, resource utilization (CPU, memory), job types.
+​​Derivation:​​ Can be used to model VM lifetimes as "bursts" or derive individual task runtimes. Requires more processing to map to discrete CPU jobs.
+​​Links:​​ Search "Microsoft Azure public dataset" or "Azure trace data."
+​​Alibaba Cluster Traces:​​
+
+​​Description:​​ Traces from Alibaba's production clusters.
+​​Data Provided:​​ Job/task submission, resource requests, actual usage, start/end times.
+​​Derivation:​​ Similar to Google traces.
+​​Links:​​ Search "Alibaba Cluster Trace." Often provided by Alibaba Cloud for research purposes.
+​​Category 3: Web Server & Network Logs (Requires More Processing)​​These are less direct for "CPU scheduling" but offer real-world event streams from which "tasks" and "service times" can be derived.
+
+​​WorldCup98 Web Server Log:​​
+
+​​Description:​​ Famous log of all requests to the World Cup 1998 website.
+​​Data Provided:​​ Request arrival time, URL requested, response size.
+​​Derivation:​​
+arrival_time: Time of request.
+burst_time: Can be modeled as the server processing time for a request (requires additional modeling or small-scale measurement).
+priority: Could be assigned based on request type (e.g., critical pages).
+​​Links:​​ Search "WorldCup98 web log" or "Internet Traffic Archive."
+​​NASA Kennedy Space Center Web Server Logs:​​
+
+​​Description:​​ Logs of requests to the NASA KSC website.
+​​Data Provided:​​ Similar to WorldCup98 logs.
+​​Derivation:​​ Similar to WorldCup98.
+​​Links:​​ Also often found in "Internet Traffic Archive" or related academic network research repositories.
+​​Category 4: Operating System/User Activity Logs (Less Common Publicly, but Possible)​​These are harder to come by publicly due to privacy, but conceptually offer direct OS-level activity.
+
+​​OS-level Process Traces (e.g., from Linux perf or sysstat):​​
+​​Description:​​ Detailed logs of process creation, execution, and termination events directly from an OS. Not usually archived for public general use due to system-specific nature and privacy.
+​​Data Provided:​​ Process ID, creation time, CPU usage, context switches, I/O.
+​​Derivation:​​ Direct arrival_time (creation), burst_time (CPU usage), priority (actual OS priority if logged).
+​​Links:​​ You would typically generate your own by running tools like perf or strace on a test system, rather than downloading an existing large-scale public archive. This counts as real-world data generation but not a "downloadable dataset."
+​​Category 5: University/Institutional Cluster Logs​​Similar to HPC, but often from diverse academic environments.
+
+​​University of Arizona Condor Logs:​​
+​​Description:​​ Logs from a Condor batch system cluster.
+​​Data Provided:​​ Job submission, start, end times, resource usage, user/group.
+​​Derivation:​​ Similar to HPC traces.
+​​Links:​​ Often found through "Condor Workload" searches or academic research archives.
+​​Category 6: Synthetic Benchmarks (providing "real" execution data)​​While the raw "dataset" is synthetic (the benchmark itself), the execution results are real-world measurements.
+
+​​SPEC CPU 2017/2006/2000 Output Logs:​​
+
+​​Description:​​ While the benchmark itself isn't a "trace," running the benchmarks generates real-world CPU usage and completion times. If you can find logs of actual SPEC runs from published research, these count.
+​​Data Provided:​​ Execution time for specific workloads, CPU cycles, memory access patterns.
+​​Derivation:​​ You would use these execution times as burst_time. You'd then need to simulated arrival patterns and priorities for multiple processes based on these.
+​​Links:​​ The SPEC website provides the benchmarks. Finding output logs from various systems requires searching academic papers that publish their SPEC results.
+​​TPC Benchmarks (e.g., TPC-C, TPC-H):​​
+
+​​Description:​​ Industry-standard benchmarks for transactional and analytical database systems. They stress CPU, I/O, and memory.
+​​Data Provided:​​ Transaction rates, response times under load.
+​​Derivation:​​ Very indirect. You'd model individual transactions as "tasks" and their processing time as burst_time. This is more about server workload than individual CPU task scheduling.
+​​Links:​​ www.tpc.org
+​​Category 7: Mobile/Edge Computing Traces​​Increasingly relevant for distributed scheduling.
+
+​​Mobile Workload Traces (e.g., from smartphone usage):​​
+​​Description:​​ Logs of application usage, CPU consumption, and network activity on mobile devices.
+​​Data Provided:​​ App launch/close times, CPU cycles used by apps, battery consumption.
+​​Derivation:​​ Can define app execution as a "job" with arrival_time (launch) and burst_time (total CPU cycles used).
+​​Links:​​ Often found in mobile computing research papers or dedicated project websites.
+​​Advice for using these datasets:​​
+
+​​Data Cleaning and Preprocessing:​​ Expect to spend significant time cleaning, parsing, and transforming these raw logs into a format suitable for your scheduling simulations (i.e., (arrival_time, burst_time, priority) for each job/process).
+​​Deriving Priority:​​ This is often the trickiest part for real-world traces. You might have to infer it from user/group IDs, job classes, requested queue, or by making reasonable assumptions (e.g., jobs submitted by a specific research group have higher priority). Clearly state your assumptions in your research.
+​​Scalability:​​ Many of these traces are huge. Ensure you have the computational resources and scripting skills to handle them.
+​​Documentation:​​ Always refer to the original documentation of the trace for precise column meanings and units.
+By leveraging a diverse selection from these categories, you can build a robust analysis grounded in various real-world computing scenarios.
