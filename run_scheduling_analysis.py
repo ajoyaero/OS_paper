@@ -72,6 +72,11 @@ def calculate_extended_metrics(df, total_time, quantum=None):
     total_burst = df["processTime"].sum()
     metrics['CPU Utilization (%)'] = (total_burst / total_time) * 100 if total_time > 0 else 0
     
+    # 2. Resource waste/idle time
+    first_arrival = df["arrivalTime"].min()
+    idle_time = total_time - total_burst - first_arrival
+    metrics['Idle Time'] = idle_time if idle_time > 0 else 0
+    
     sum_wt = df["WaitingTime"].sum()
     sum_sq_wt = (df["WaitingTime"]**2).sum()
     n = len(df)
@@ -88,10 +93,70 @@ def calculate_extended_metrics(df, total_time, quantum=None):
     starvation_threshold = 3 * avg_burst
     metrics['Starvation Count'] = len(df[df["WaitingTime"] > starvation_threshold])
     
-    metrics['Context-Switches'] = len(df)
+    # 1. Preemption frequency
+    # 8. Dynamic task switching efficiency
+    cs_count = len(df)
     if 'Preemptions' in df.columns:
-        metrics['Context-Switches'] += df['Preemptions'].sum()
+        cs_count += df['Preemptions'].sum()
+    metrics['Preemption Frequency'] = cs_count / n if n > 0 else 0
+    
+    # Assuming 0.1 time unit per context switch
+    cs_overhead = 0.1 * cs_count
+    metrics['Task Switching Eff (%)'] = (total_burst / (total_burst + cs_overhead)) * 100 if (total_burst + cs_overhead) > 0 else 0
+
+    # 3. Priority inversion potential
+    # If a high priority job arrived and is waiting while a lower priority job is executing
+    inversion_count = 0
+    # 5. Fairness bias / fairness to low-priority jobs
+    # Correlation between priority and waiting time.
+    # Higher priority (lower number in typical OS, but here we used min(10, req_procs), let's keep it straight metric-wise)
+    # The higher the value of 'priority' column here, the higher the "priority".
+    # A negative correlation means higher priority gets lower waiting time (fairness to priority, bias against low).
+    
+    if n > 0:
+        for idx, row in df.iterrows():
+            arr, prio = row['arrivalTime'], row['priority']
+            # Find jobs with lower priority that were executing when this higher priority job arrived
+            # This is simpler logic just evaluating temporal overlap
+            if prio > 1:
+                lower_prio_executing = df[(df['priority'] < prio) & (df['StartTime'] < arr) & (df['FinishTime'] > arr)]
+                if not lower_prio_executing.empty:
+                    inversion_count += len(lower_prio_executing)
+                    
+        metrics['Priority Inversion Potential'] = inversion_count
         
+        # Pearson correlation
+        std_prio = df['priority'].std()
+        std_wt = df['WaitingTime'].std()
+        if std_prio > 0 and std_wt > 0:
+            metrics['Fairness Bias (Corr)'] = df['priority'].corr(df['WaitingTime'])
+        else:
+            metrics['Fairness Bias (Corr)'] = 0.0
+            
+    # 6. Fairness over time
+    # Split the dataset into first half and second half temporally
+    if n > 1:
+        mid_time = first_arrival + (total_time - first_arrival) / 2
+        df_first = df[df['arrivalTime'] <= mid_time]
+        df_second = df[df['arrivalTime'] > mid_time]
+        
+        def safe_jfi(sub_df):
+            if sub_df.empty: return 1.0
+            s_wt = sub_df["WaitingTime"].sum()
+            ss_wt = (sub_df["WaitingTime"]**2).sum()
+            return (s_wt**2) / (len(sub_df) * ss_wt) if ss_wt > 0 else 1.0
+            
+        metrics['JFI First Half'] = safe_jfi(df_first)
+        metrics['JFI Second Half'] = safe_jfi(df_second)
+    else:
+        metrics['JFI First Half'] = 1.0
+        metrics['JFI Second Half'] = 1.0
+
+    # 7. Throughput vs. fairness metric 
+    # Ratio of Throughput to Gini Inequality index - higher is better performance-fairness balance
+    gt = metrics['Gini (WT)']
+    metrics['Throughput to Gini'] = metrics['Throughput'] / gt if gt > 0 else metrics['Throughput']
+
     return metrics
 
 def fcfs_schedule(df_in):
@@ -197,6 +262,9 @@ def run_analysis():
     datasets = generate_datasets()
     all_results = []
     
+    # To store data for 9. Job-wait distribution
+    all_job_waits = []
+    
     for ds_name, ds_df in datasets.items():
         mean_burst = ds_df['processTime'].mean()
         quantum = int(mean_burst / 2) if int(mean_burst / 2) > 0 else 1
@@ -221,18 +289,55 @@ def run_analysis():
         
         all_results.extend([m_fcfs, m_prio, m_rr])
         
+        # Save raw waiting times for the Job-wait distribution plot
+        for _, row in res_fcfs.iterrows():
+            all_job_waits.append({'Dataset': ds_name, 'Algorithm': 'FCFS', 'WaitingTime': row['WaitingTime']})
+        for _, row in res_prio.iterrows():
+            all_job_waits.append({'Dataset': ds_name, 'Algorithm': 'Priority', 'WaitingTime': row['WaitingTime']})
+        for _, row in res_rr.iterrows():
+             all_job_waits.append({'Dataset': ds_name, 'Algorithm': 'Round Robin', 'WaitingTime': row['WaitingTime']})
+        
     results_df = pd.DataFrame(all_results)
     
     # Generate Plots
-    metrics_to_plot = ['AWT', 'Response Time', 'JFI', 'Starvation Count']
+    metrics_to_plot = [
+        'AWT', 'Response Time', 'JFI', 'Starvation Count', 
+        'MWT', 'Preemption Frequency', 'Idle Time', 'Priority Inversion Potential',
+        'Fairness Bias (Corr)', 'Throughput to Gini', 'Task Switching Eff (%)'
+    ]
+    
+    if not os.path.exists("images"):
+        os.makedirs("images")
+        
     for metric in metrics_to_plot:
         plt.figure(figsize=(14, 8))
         sns.barplot(data=results_df, x='Dataset', y=metric, hue='Algorithm')
         plt.title(f'{metric} Comparison across Datasets')
         plt.xticks(rotation=45, ha='right')
         plt.tight_layout()
-        plt.savefig(f'images/{metric.replace(" ", "_")}.png')
+        plt.savefig(f'images/{metric.replace(" ", "_").replace("%", "Pct").replace("(", "").replace(")", "")}.png')
         plt.close()
+        
+    # Plot 6. Fairness over time (JFI First vs Second Half)
+    time_df = pd.melt(results_df, id_vars=['Dataset', 'Algorithm'], value_vars=['JFI First Half', 'JFI Second Half'], 
+                      var_name='Time_Period', value_name='JFI_Value')
+    plt.figure(figsize=(14, 8))
+    sns.catplot(data=time_df, x='Dataset', y='JFI_Value', hue='Algorithm', col='Time_Period', kind='bar', height=6, aspect=1.2)
+    plt.tight_layout()
+    plt.savefig('images/Fairness_Over_Time.png')
+    plt.close('all')
+        
+    # Plot 9. Job-wait distribution
+    waits_df = pd.DataFrame(all_job_waits)
+    plt.figure(figsize=(14, 8))
+    # Using log scale to better visualize distributions since AWT can be insanely high in HPC
+    waits_df['LogWaitingTime'] = np.log1p(waits_df['WaitingTime'])
+    sns.violinplot(data=waits_df, x='Dataset', y='LogWaitingTime', hue='Algorithm', split=False, cut=0)
+    plt.title('Job-Wait Distribution (Log Scale) across Datasets')
+    plt.xticks(rotation=45, ha='right')
+    plt.tight_layout()
+    plt.savefig('images/Job_Wait_Distribution.png')
+    plt.close()
         
     results_df.to_csv("results.csv", index=False)
     print(f"Analysis finished successfully on {len(datasets)} explicit real-world datasets. Saved images and CSV.")
