@@ -23,13 +23,13 @@ To robustly assess scheduling fairness, this study implements a hybrid evaluatio
 ### Primary Performance Parameters
 1. **Average Waiting Time (AWT):** Total time processes spend in the ready queue. Efficient schedulers actively minimize this metric.
 2. **Average Response Time:** The time from arrival to the first CPU execution. This is a critical indicator of fairness, particularly in interactive computing environments.
-3. **Normalized Turnaround Time (Bounded Slowdown):** Calculated as Turnaround Time divided by Execution Time. This represents "relative fairness" by measuring the wait penalty a process suffers proportional to its actual size.
+3. **Bounded Slowdown & Maximum Bounded Slowdown:** Calculated as Turnaround Time divided by Execution Time. This represents "relative fairness" by measuring the wait penalty a process suffers proportional to its actual size. The *Maximum* Bounded Slowdown reveals the absolute worst-case scheduling anomaly in the entire dataset.
 4. **Throughput & CPU Utilization:** Metrics to ensure that fairness does not inherently cripple the system's ability to complete work.
 
 ### Fairness-Specific Metrics
 1. **Jain's Fairness Index (JFI):** Measures the equality of resource allocation, ranging from $1/n$ (worst) to 1 (perfect fairness). It is mathematically scale-independent.
-2. **Waiting Time Variance:** Measures the statistical predictability of the system. High variance indicates erratic, unreliable scheduling, which users perceive as unfair.
-3. **Starvation Count:** Detects processes experiencing unbounded waiting. In our methodology, a process is considered "starved" if its waiting time exceeds three times the average burst duration.
+2. **Waiting Time Coefficient of Variation (WT CV):** Calculated as the standard deviation of waiting time divided by its mean. This measures the normalized statistical predictability of the system. A CV > 1 indicates a highly erratic, "heavy-tailed" experience, which users perceive as unfair.
+3. **Starvation Rate:** The percentage of processes experiencing unbounded waiting. In our methodology, a process is considered "starved" if its waiting time exceeds three times the average burst duration.
 
 ---
 
@@ -60,25 +60,26 @@ A discrete-event simulation framework modeled the CPU scheduling behavior sequen
 ![AWT](images/AWT.png)
 - **Observations:** Real-world workloads are notoriously heavy-tailed and bursty. As the theoretical optimum, **SJF universally annihilated the Average Waiting Time** compared to all other algorithms. For example, in the SDSC-SP2 trace, SJF achieved an AWT of ~105,000 ms compared to FCFS at ~824,000 ms. However, SJF pays for this efficiency with severe structural unfairness to long jobs. **Round Robin** served as a highly effective middle ground, consistently outperforming the FCFS "Convoy Effect" while preventing the severe discrimination inherent to SJF.
 
-### Responsiveness and Normalized Turnaround Time (Bounded Slowdown)
+### Responsiveness and Bounded Slowdown
 ![Response Time](images/Response_Time.png)
 ![Bounded Slowdown](images/Bounded_Slowdown.png)
-- **Observations:** Round Robin guarantees dramatically superior response times across the entire board of 10 real-world traces. In the SDSC-SP2 workload, FCFS forced users into average response times exceeding 820,000 milliseconds. RR consistently crushed this boundary. Furthermore, the newly introduced **Bounded Slowdown** metric reveals how deeply unfair FCFS is to small jobs. In SDSC-SP2, the FCFS Bounded Slowdown was 46,412 (meaning jobs waited 46,000 times longer than they executed), compared to SJF at 162 and RR at 6,621. Time-slicing is functionally mandatory for relative fairness in bursty HPC scenarios.
+![Max Bounded Slowdown](images/Max_Bounded_Slowdown.png)
+- **Observations:** Round Robin guarantees dramatically superior response times across the entire board of 10 real-world traces. Furthermore, the **Bounded Slowdown** metric reveals exactly how deeply unfair FCFS is to small jobs. In SDSC-SP2, the FCFS average Bounded Slowdown was 46,412, while the **Maximum Bounded Slowdown** reached a catastrophic 1,120,413. This meant a tiny job was forced to wait over one million times its execution length simply because it was stuck in an FCFS convoy. Time-slicing (RR) is functionally mandatory for relative fairness in bursty HPC scenarios.
 
-### Jain's Fairness Index (JFI) & System Variance
+### Jain's Fairness Index (JFI) & System Predictability (WT CV)
 ![JFI](images/JFI.png)
-![WT Variance](images/WT_Variance.png)
-- **Observations:** Fairness scoring fluctuates uniquely on raw data compared to theoretical data. **SJF**, despite being the most "efficient" algorithm, consistently records the absolute worst JFI scores across the traces (e.g., 0.14 in SDSC-SP2) because it structurally discriminates against large jobs. FCFS ironically scores high mathematical JFIs because it forces everyone behind the convoy to suffer equally (raising JFI mathematically because misery is equally distributed). Furthermore, SJF and RR dramatically reduce **Waiting Time Variance** compared to FCFS, proving they create a more predictable and therefore experientially fairer system for the end user.
+![WT CV](images/WT_CV.png)
+- **Observations:** Fairness scoring fluctuates uniquely on raw data compared to theoretical data. **SJF**, despite being the most "efficient" algorithm, consistently records the absolute worst JFI scores across the traces (e.g., 0.14 in SDSC-SP2). This extreme unfairness is backed up by the **Waiting Time Coefficient of Variation (WT CV)**. SJF's WT CV spiked to 2.41 in the SDSC-SP2 trace, representing a wildly erratic, heavy-tailed wait experience. Conversely, Round Robin smoothed out the experience for the vast majority of jobs. FCFS ironically scores high mathematical JFIs because it forces everyone behind the convoy to suffer equally (raising JFI mathematically because misery is equally distributed).
 
-### Starvation, Preemption, and the Failure of Linear Aging
-![Starvation Count](images/Starvation_Count.png)
-- **Observations:** Absolute starvation exists across the board in all 10 traces during non-preemptive Priority execution. Notably, the implementation of **Priority Scheduling with Aging** failed to significantly rescue the lowest-priority jobs from starvation in highly bursty traces like SDSC-SP2. In real-world HPC environments, the sheer volume and rate of new job arrivals often vastly outpaces the linear priority inflation of decaying processes. Meaningful starvation mitigation requires exponential aging algorithms, not linear ones.
+### Starvation Rates, Preemption, and the Failure of Linear Aging
+![Starvation Rate Pct](images/Starvation_Rate_Pct.png)
+- **Observations:** Absolute starvation exists across the board in all 10 traces during non-preemptive Priority execution, often hitting a **Starvation Rate of 99%**. Notably, the implementation of **Priority Scheduling with Aging** generally failed to significantly rescue the lowest-priority jobs from starvation in highly bursty traces like SDSC-SP2. In real-world HPC environments, the sheer volume and rate of new job arrivals often vastly outpaces the linear priority inflation of decaying processes. Meaningful starvation mitigation requires exponential aging algorithms, not linear ones.
 
 ---
 
 ## 6. Conclusion
 This expansive systematic quantification on 10 explicit real-world HPC trace logs confirms a core fundamental tension in operating system design: **Algorithms that maximize theoretical mathematical fairness (FCFS JFI) or theoretical peak efficiency (SJF) rarely align with actual user responsiveness and relative fairness.** 
 
-FCFS forces severe "mathematical fairness" under these highly skewed historical workloads simply by enforcing a brutal convoy; equal suffering results in a high mathematical fairness score but a catastrophic Bounded Slowdown. SJF achieves absolute optimal Average Waiting Time but relies on structural starvation that ruins its JFI score. Priority scheduling aligns strictly to organizational hierarchies, but simple linear Aging mechanics are helpless against the sheer burst velocity of real-world supercomputers, resulting in systemic starvation.
+FCFS forces severe "mathematical fairness" under these highly skewed historical workloads simply by enforcing a brutal convoy; equal suffering results in a high mathematical fairness score but a catastrophic Maximum Bounded Slowdown (over 1,000,000x penalty). SJF achieves absolute optimal Average Waiting Time but relies on structural starvation that ruins its JFI score and drives its Wait Time Coefficient of Variation into erratic territory. Priority scheduling aligns strictly to organizational hierarchies, but simple linear Aging mechanics are helpless against the sheer burst velocity of real-world supercomputers, resulting in systemic starvation rates exceeding 90%.
 
-Round Robin proves to be the ultimate practical synthesis for bursty, real-world datasets exactly like the SDSC, KTH, and CEA-Curie historical archives. It aggressively drops maximum responsiveness latencies, controls Bounded Slowdown for small tasks, and ensures no processes face starvation, all despite an explicit tax in context-switching overhead. For highly variant empirical HPC queue patterns, periodic preemption acts as an indispensable equalizer.
+Round Robin proves to be the ultimate practical synthesis for bursty, real-world datasets exactly like the SDSC, KTH, and CEA-Curie historical archives. It aggressively drops maximum responsiveness latencies, controls Bounded Slowdown for small tasks, and ensures low Starvation Rates, all despite an explicit tax in context-switching overhead. For highly variant empirical HPC queue patterns, periodic preemption acts as an indispensable equalizer.

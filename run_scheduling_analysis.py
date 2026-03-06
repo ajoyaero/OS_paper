@@ -67,7 +67,9 @@ def calculate_extended_metrics(df, total_time, quantum=None):
     metrics['ATAT'] = df["TurnaroundTime"].mean()
     metrics['Response Time'] = df["ResponseTime"].mean()
     metrics['Bounded Slowdown'] = (df["TurnaroundTime"] / df["processTime"]).mean()
+    metrics['Max Bounded Slowdown'] = (df["TurnaroundTime"] / df["processTime"]).max()
     metrics['WT Variance'] = df["WaitingTime"].var() if len(df) > 1 else 0
+    metrics['WT CV'] = df["WaitingTime"].std() / df["WaitingTime"].mean() if df["WaitingTime"].mean() > 0 else 0
     metrics['MWT'] = df["WaitingTime"].max()
     metrics['MWT'] = df["WaitingTime"].max()
     metrics['Throughput'] = len(df) / total_time if total_time > 0 else 0
@@ -95,6 +97,7 @@ def calculate_extended_metrics(df, total_time, quantum=None):
     avg_burst = df["processTime"].mean()
     starvation_threshold = 3 * avg_burst
     metrics['Starvation Count'] = len(df[df["WaitingTime"] > starvation_threshold])
+    metrics['Starvation Rate (%)'] = (metrics['Starvation Count'] / n) * 100 if n > 0 else 0
     
     # 1. Preemption frequency
     # 8. Dynamic task switching efficiency
@@ -400,7 +403,7 @@ def run_analysis():
     
     # Generate Plots
     metrics_to_plot = [
-        'AWT', 'Response Time', 'Bounded Slowdown', 'WT Variance', 'JFI', 'Starvation Count', 
+        'AWT', 'Response Time', 'Bounded Slowdown', 'Max Bounded Slowdown', 'WT Variance', 'WT CV', 'JFI', 'Starvation Rate (%)', 
         'MWT', 'Preemption Frequency', 'Priority Inversion Potential',
         'Fairness Bias (Corr)', 'Throughput to Gini', 'Task Switching Eff (%)'
     ]

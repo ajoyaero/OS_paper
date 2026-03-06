@@ -355,7 +355,7 @@ notebook = {
  "nbformat_minor": 4
 }
 
-with open('c:/Users/adib/Desktop/OS_paper/Final_Scheduling_Analysis.ipynb', 'w') as f:
+with open('Final_Scheduling_Analysis.ipynb', 'w') as f:
     json.dump(notebook, f, indent=1)
 
 print("Notebook generated successfully!")
