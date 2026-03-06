@@ -9,8 +9,9 @@ Fairness in CPU scheduling is a fundamental dimension of operating system design
 While traditional scheduling evaluation focuses heavily on efficiency (minimizing average waiting time and maximizing throughput), fairness seeks to measure the equality or proportionality of resource allocation. 
 
 - **First-Come, First-Served (FCFS)** provides temporal fairness by serving processes strictly in arrival order. However, it is susceptible to the "convoy effect," where short processes wait excessively behind long processes.
+- **Shortest Job First (SJF)** represents the theoretical mathematical optimum for minimizing waiting time, but it structurally guarantees extreme unfairness (and starvation) for long-running processes.
 - **Round Robin (RR)** enforces fairness through time-slicing. By granting each process an equal quantum of CPU time, it prevents monopolization but often at the cost of increased context-switching overhead and slightly longer average turnaround times.
-- **Priority Scheduling** allocates resources hierarchically based on importance. This inherently creates a fairness gradient that can disadvantage lower-priority processes, leading to the risk of indefinite blocking or *starvation*.
+- **Priority Scheduling** allocates resources hierarchically based on importance. This inherently creates a fairness gradient that can disadvantage lower-priority processes, leading to the risk of indefinite blocking or *starvation*. Advanced implementations attempt to mitigate this using **Aging**.
 
 Quantifying these trade-offs requires multidimensional metrics that capture both the overall system efficiency and the distributional equity of the CPU across the workload.
 
@@ -22,11 +23,12 @@ To robustly assess scheduling fairness, this study implements a hybrid evaluatio
 ### Primary Performance Parameters
 1. **Average Waiting Time (AWT):** Total time processes spend in the ready queue. Efficient schedulers actively minimize this metric.
 2. **Average Response Time:** The time from arrival to the first CPU execution. This is a critical indicator of fairness, particularly in interactive computing environments.
-3. **Throughput & CPU Utilization:** Metrics to ensure that fairness does not inherently cripple the system's ability to complete work.
+3. **Normalized Turnaround Time (Bounded Slowdown):** Calculated as Turnaround Time divided by Execution Time. This represents "relative fairness" by measuring the wait penalty a process suffers proportional to its actual size.
+4. **Throughput & CPU Utilization:** Metrics to ensure that fairness does not inherently cripple the system's ability to complete work.
 
 ### Fairness-Specific Metrics
 1. **Jain's Fairness Index (JFI):** Measures the equality of resource allocation, ranging from $1/n$ (worst) to 1 (perfect fairness). It is mathematically scale-independent.
-2. **Gini Coefficient for Waiting Time (Gini WT):** Measures inequality in waiting times, ranging from 0 (perfect equality) to 1 (maximum inequality). Lower is fairer.
+2. **Waiting Time Variance:** Measures the statistical predictability of the system. High variance indicates erratic, unreliable scheduling, which users perceive as unfair.
 3. **Starvation Count:** Detects processes experiencing unbounded waiting. In our methodology, a process is considered "starved" if its waiting time exceeds three times the average burst duration.
 
 ---
@@ -48,33 +50,35 @@ A robust evaluation demands diverse, authentic workload characteristics. We reje
 ---
 
 ## 4. Methodology for Fairness Quantification
-A discrete-event simulation framework modeled the CPU scheduling behavior sequentially processing 200 chronological jobs from each of the 10 massive trace logs. For Round Robin, the time quantum was dynamically configured to roughly **half the mean CPU burst time** for each respective dataset to balance responsiveness with context-switch optimization. Priority was modeled natively as non-preemptive.
+A discrete-event simulation framework modeled the CPU scheduling behavior sequentially processing 200 chronological jobs from each of the 10 massive trace logs. Schedulers evaluated included FCFS, Priority, Round Robin, SJF, and Priority with Aging (where priority dynamically increases roughly every ten full mean burst cycles). For Round Robin, the time quantum was dynamically configured to roughly **half the mean CPU burst time** for each respective dataset to balance responsiveness with context-switch optimization.
 
 ---
 
 ## 5. Experimental Results and Analysis
 
-### Average Waiting Time (AWT)
+### Average Waiting Time (AWT) & The SJF Baseline
 ![AWT](images/AWT.png)
-- **Observations:** Real-world workloads are notoriously heavy-tailed and bursty. Across almost all 10 realistic HPC traces (such as the SDSC-BLUE and PIK-IPLEX), **Round Robin drastically annihilated the Average Waiting Time** compared to FCFS. In practically every dataset suffering from massive high-burst requests, FCFS suffered heavy wait-time bottlenecking due to the Convoy Effect. Round Robin time-slicing proved that for realistic HPC distributions, rigid order guarantees are highly detrimental to overall queue evacuation.
+- **Observations:** Real-world workloads are notoriously heavy-tailed and bursty. As the theoretical optimum, **SJF universally annihilated the Average Waiting Time** compared to all other algorithms. For example, in the SDSC-SP2 trace, SJF achieved an AWT of ~105,000 ms compared to FCFS at ~824,000 ms. However, SJF pays for this efficiency with severe structural unfairness to long jobs. **Round Robin** served as a highly effective middle ground, consistently outperforming the FCFS "Convoy Effect" while preventing the severe discrimination inherent to SJF.
 
-### Responsiveness and Response Time
+### Responsiveness and Normalized Turnaround Time (Bounded Slowdown)
 ![Response Time](images/Response_Time.png)
-- **Observations:** Round Robin guarantees dramatically superior response times across the entire board of 10 real-world traces. In the SDSC-SP2 workload, FCFS forced users into average response times exceeding 820,000 milliseconds. RR consistently crushed this boundary, proving that time-slicing is functionally mandatory for fairness in bursty HPC scenarios to avoid massive application lock-ups for new arrivals.
+![Bounded Slowdown](images/Bounded_Slowdown.png)
+- **Observations:** Round Robin guarantees dramatically superior response times across the entire board of 10 real-world traces. In the SDSC-SP2 workload, FCFS forced users into average response times exceeding 820,000 milliseconds. RR consistently crushed this boundary. Furthermore, the newly introduced **Bounded Slowdown** metric reveals how deeply unfair FCFS is to small jobs. In SDSC-SP2, the FCFS Bounded Slowdown was 46,412 (meaning jobs waited 46,000 times longer than they executed), compared to SJF at 162 and RR at 6,621. Time-slicing is functionally mandatory for relative fairness in bursty HPC scenarios.
 
-### Jain's Fairness Index (JFI)
+### Jain's Fairness Index (JFI) & System Variance
 ![JFI](images/JFI.png)
-- **Observations:** Fairness scoring fluctuates uniquely on raw data compared to theoretical data. In historically uneven logs like ANL-Intrepid and SDSC-BLUE, FCFS ironically scores a mathematical JFI higher than Round Robin. This is because Round Robin structurally increases the *variance* of completion times for very long processes by continually pre-empting them. While FCFS forces everyone behind the convoy to suffer equally (raising JFI mathematically because misery is equally distributed), Round Robin correctly prioritizes sheer flow and responsiveness.
+![WT Variance](images/WT_Variance.png)
+- **Observations:** Fairness scoring fluctuates uniquely on raw data compared to theoretical data. **SJF**, despite being the most "efficient" algorithm, consistently records the absolute worst JFI scores across the traces (e.g., 0.14 in SDSC-SP2) because it structurally discriminates against large jobs. FCFS ironically scores high mathematical JFIs because it forces everyone behind the convoy to suffer equally (raising JFI mathematically because misery is equally distributed). Furthermore, SJF and RR dramatically reduce **Waiting Time Variance** compared to FCFS, proving they create a more predictable and therefore experientially fairer system for the end user.
 
-### Starvation and Context Switching Overhead
+### Starvation, Preemption, and the Failure of Linear Aging
 ![Starvation Count](images/Starvation_Count.png)
-- **Observations:** Absolute starvation exists across the board in all 10 traces during non-preemptive Priority execution. Meanwhile, RR pays a significant tax in processing overhead across all logs. In the CEA-Curie trace, Round Robin forced a barrage of context-switches exponentially higher than the 200 standard context switches in FCFS.
+- **Observations:** Absolute starvation exists across the board in all 10 traces during non-preemptive Priority execution. Notably, the implementation of **Priority Scheduling with Aging** failed to significantly rescue the lowest-priority jobs from starvation in highly bursty traces like SDSC-SP2. In real-world HPC environments, the sheer volume and rate of new job arrivals often vastly outpaces the linear priority inflation of decaying processes. Meaningful starvation mitigation requires exponential aging algorithms, not linear ones.
 
 ---
 
 ## 6. Conclusion
-This expansive systematic quantification on 10 explicit real-world HPC trace logs confirms a core fundamental tension in operating system design: **Algorithms that maximize theoretical fairness structures rarely align with actual user responsiveness.** 
+This expansive systematic quantification on 10 explicit real-world HPC trace logs confirms a core fundamental tension in operating system design: **Algorithms that maximize theoretical mathematical fairness (FCFS JFI) or theoretical peak efficiency (SJF) rarely align with actual user responsiveness and relative fairness.** 
 
-FCFS forces severe mathematical "fairness" (a high Jain's Index) under these highly skewed historical workloads simply by enforcing a brutal convoy where every process waits for an eternity; equal suffering results in a high mathematical fairness score but terrible system performance. Priority scheduling aligns strictly to organizational hierarchies but naturally allows the rampant starvation of low-tier processes across every tested supercomputer.
+FCFS forces severe "mathematical fairness" under these highly skewed historical workloads simply by enforcing a brutal convoy; equal suffering results in a high mathematical fairness score but a catastrophic Bounded Slowdown. SJF achieves absolute optimal Average Waiting Time but relies on structural starvation that ruins its JFI score. Priority scheduling aligns strictly to organizational hierarchies, but simple linear Aging mechanics are helpless against the sheer burst velocity of real-world supercomputers, resulting in systemic starvation.
 
-Round Robin proves to be the ultimate practical solution for bursty, real-world datasets exactly like the SDSC, KTH, and CEA-Curie historical archives. It aggressively drops maximum responsiveness latencies and overall Average Waiting Time despite an explicit tax in context-switching overhead. For highly variant empirical HPC queue patterns, periodic preemption acts as an indispensable equalizer for process initiation.
+Round Robin proves to be the ultimate practical synthesis for bursty, real-world datasets exactly like the SDSC, KTH, and CEA-Curie historical archives. It aggressively drops maximum responsiveness latencies, controls Bounded Slowdown for small tasks, and ensures no processes face starvation, all despite an explicit tax in context-switching overhead. For highly variant empirical HPC queue patterns, periodic preemption acts as an indispensable equalizer.

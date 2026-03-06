@@ -66,6 +66,9 @@ def calculate_extended_metrics(df, total_time, quantum=None):
     metrics['AWT'] = df["WaitingTime"].mean()
     metrics['ATAT'] = df["TurnaroundTime"].mean()
     metrics['Response Time'] = df["ResponseTime"].mean()
+    metrics['Bounded Slowdown'] = (df["TurnaroundTime"] / df["processTime"]).mean()
+    metrics['WT Variance'] = df["WaitingTime"].var() if len(df) > 1 else 0
+    metrics['MWT'] = df["WaitingTime"].max()
     metrics['MWT'] = df["WaitingTime"].max()
     metrics['Throughput'] = len(df) / total_time if total_time > 0 else 0
     
@@ -211,6 +214,86 @@ def priority_schedule(df_in):
     df['Preemptions'] = 0
     return df, current_time
 
+def sjf_schedule(df_in):
+    # Non-preemptive Shortest Job First
+    df = df_in.copy().sort_values(by=['arrivalTime', 'processTime']).reset_index(drop=True)
+    current_time = 0
+    completed = 0
+    n = len(df)
+    
+    start_times = np.zeros(n)
+    finish_times = np.zeros(n)
+    is_completed = np.zeros(n, dtype=bool)
+    
+    while completed < n:
+        arrived = df[(df['arrivalTime'] <= current_time) & (~is_completed)]
+        if arrived.empty:
+            next_arrival = df.loc[~is_completed, 'arrivalTime'].min()
+            current_time = next_arrival
+            arrived = df[(df['arrivalTime'] <= current_time) & (~is_completed)]
+            
+        # Pick shortest burst time
+        idx = arrived['processTime'].idxmin()
+        start = current_time
+        burst = df.loc[idx, 'processTime']
+        finish = start + burst
+        
+        start_times[idx] = start
+        finish_times[idx] = finish
+        is_completed[idx] = True
+        
+        current_time = finish
+        completed += 1
+        
+    df['StartTime'] = start_times
+    df['FinishTime'] = finish_times
+    df['Preemptions'] = 0
+    return df, current_time
+
+def priority_aging_schedule(df_in): 
+    # Non-preemptive Priority with Aging
+    df = df_in.copy().sort_values(by=['arrivalTime', 'priority'], ascending=[True, False]).reset_index(drop=True)
+    current_time = 0
+    completed = 0
+    n = len(df)
+    
+    start_times = np.zeros(n)
+    finish_times = np.zeros(n)
+    is_completed = np.zeros(n, dtype=bool)
+    
+    # Priority increases by 1 for roughly every 10x mean burst waiting time
+    aging_interval = df['processTime'].mean() * 10 
+    if aging_interval <= 0: aging_interval = 1000
+    
+    while completed < n:
+        arrived = df[(df['arrivalTime'] <= current_time) & (~is_completed)].copy()
+        if arrived.empty:
+            next_arrival = df.loc[~is_completed, 'arrivalTime'].min()
+            current_time = next_arrival
+            arrived = df[(df['arrivalTime'] <= current_time) & (~is_completed)].copy()
+            
+        # Dynamic priority = base priority + aging factor
+        arrived['dynamic_priority'] = arrived['priority'] + ((current_time - arrived['arrivalTime']) / aging_interval)
+        
+        # Pick highest dynamic priority
+        idx = arrived['dynamic_priority'].idxmax()
+        start = current_time
+        burst = df.loc[idx, 'processTime']
+        finish = start + burst
+        
+        start_times[idx] = start
+        finish_times[idx] = finish
+        is_completed[idx] = True
+        
+        current_time = finish
+        completed += 1
+        
+    df['StartTime'] = start_times
+    df['FinishTime'] = finish_times
+    df['Preemptions'] = 0
+    return df, current_time
+
+
 def round_robin_schedule(df_in, quantum):
     df = df_in.copy().sort_values(by='arrivalTime').reset_index(drop=True)
     n = len(df)
@@ -287,7 +370,19 @@ def run_analysis():
         m_rr['Algorithm'] = 'Round Robin'
         m_rr['Dataset'] = ds_name
         
-        all_results.extend([m_fcfs, m_prio, m_rr])
+        # SJF
+        res_sjf, tt_sjf = sjf_schedule(ds_df)
+        m_sjf = calculate_extended_metrics(res_sjf, tt_sjf)
+        m_sjf['Algorithm'] = 'SJF'
+        m_sjf['Dataset'] = ds_name
+
+        # Priority (Aging)
+        res_prio_aging, tt_prio_aging = priority_aging_schedule(ds_df)
+        m_prio_aging = calculate_extended_metrics(res_prio_aging, tt_prio_aging)
+        m_prio_aging['Algorithm'] = 'Priority (Aging)'
+        m_prio_aging['Dataset'] = ds_name
+        
+        all_results.extend([m_fcfs, m_prio, m_rr, m_sjf, m_prio_aging])
         
         # Save raw waiting times for the Job-wait distribution plot
         for _, row in res_fcfs.iterrows():
@@ -296,13 +391,17 @@ def run_analysis():
             all_job_waits.append({'Dataset': ds_name, 'Algorithm': 'Priority', 'WaitingTime': row['WaitingTime']})
         for _, row in res_rr.iterrows():
              all_job_waits.append({'Dataset': ds_name, 'Algorithm': 'Round Robin', 'WaitingTime': row['WaitingTime']})
+        for _, row in res_sjf.iterrows():
+             all_job_waits.append({'Dataset': ds_name, 'Algorithm': 'SJF', 'WaitingTime': row['WaitingTime']})
+        for _, row in res_prio_aging.iterrows():
+             all_job_waits.append({'Dataset': ds_name, 'Algorithm': 'Priority (Aging)', 'WaitingTime': row['WaitingTime']})
         
     results_df = pd.DataFrame(all_results)
     
     # Generate Plots
     metrics_to_plot = [
-        'AWT', 'Response Time', 'JFI', 'Starvation Count', 
-        'MWT', 'Preemption Frequency', 'Idle Time', 'Priority Inversion Potential',
+        'AWT', 'Response Time', 'Bounded Slowdown', 'WT Variance', 'JFI', 'Starvation Count', 
+        'MWT', 'Preemption Frequency', 'Priority Inversion Potential',
         'Fairness Bias (Corr)', 'Throughput to Gini', 'Task Switching Eff (%)'
     ]
     
